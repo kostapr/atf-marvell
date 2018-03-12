@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, ARM Limited and Contributors. All rights reserved.
+ * Copyright (c) 2014-2018, ARM Limited and Contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,10 +31,8 @@
 #include <arch.h>
 #include <asm_macros.S>
 #include <assert_macros.S>
-#include <cpu_macros.S>
-#if IMAGE_BL31
 #include <cpu_data.h>
-#endif
+#include <cpu_macros.S>
 #include <debug.h>
 #include <errata_report.h>
 
@@ -291,3 +289,36 @@ func print_errata_status
 	br	x1
 endfunc print_errata_status
 #endif
+
+/*
+ * int check_workaround_cve_2017_5715(void);
+ *
+ * This function returns:
+ *  - ERRATA_APPLIES when firmware mitigation is required.
+ *  - ERRATA_NOT_APPLIES when firmware mitigation is _not_ required.
+ *  - ERRATA_MISSING when firmware mitigation would be required but
+ *    is not compiled in.
+ *
+ * NOTE: Must be called only after cpu_ops have been initialized
+ *       in per-CPU data.
+ */
+	.globl	check_workaround_cve_2017_5715
+func check_workaround_cve_2017_5715
+	mrs	x0, tpidr_el3
+#if ENABLE_ASSERTIONS
+	cmp	x0, #0
+	ASM_ASSERT(ne)
+#endif
+	ldr	x0, [x0, #CPU_DATA_CPU_OPS_PTR]
+	ldr	x0, [x0, #CPU_EXTRA1_FUNC]
+	/*
+	 * If the reserved function pointer is NULL, this CPU
+	 * is unaffected by CVE-2017-5715 so bail out.
+	 */
+	cmp	x0, #0
+	beq	1f
+	br	x0
+1:
+	mov	x0, #ERRATA_NOT_APPLIES
+	ret
+endfunc check_workaround_cve_2017_5715
