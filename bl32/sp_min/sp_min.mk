@@ -46,6 +46,11 @@ ifeq (${ENABLE_PMF}, 1)
 BL32_SOURCES		+=	lib/pmf/pmf_main.c
 endif
 
+ifeq (${WORKAROUND_CVE_2017_5715},1)
+BL32_SOURCES		+=	bl32/sp_min/wa_cve_2017_5715_bpiall.S	\
+				bl32/sp_min/wa_cve_2017_5715_icache_inv.S
+endif
+
 BL32_LINKERFILE	:=	bl32/sp_min/sp_min.ld.S
 
 # Include the platform-specific SP_MIN Makefile
