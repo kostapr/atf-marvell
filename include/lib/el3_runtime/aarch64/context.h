@@ -124,8 +124,8 @@
  * Constants that allow assembler code to access members of and the 'fp_regs'
  * structure at their correct offsets.
  ******************************************************************************/
-#if CTX_INCLUDE_FPREGS
 #define CTX_FPREGS_OFFSET	(CTX_SYSREGS_OFFSET + CTX_SYSREGS_END)
+#if CTX_INCLUDE_FPREGS
 #define CTX_FP_Q0		0x0
 #define CTX_FP_Q1		0x10
 #define CTX_FP_Q2		0x20
@@ -161,7 +161,13 @@
 #define CTX_FP_FPSR		0x200
 #define CTX_FP_FPCR		0x208
 #define CTX_FPREGS_END		0x210
+#else
+#define CTX_FPREGS_END		0x0
 #endif
+
+#define CTX_CVE_2018_3639_OFFSET	(CTX_FPREGS_OFFSET + CTX_FPREGS_END)
+#define CTX_CVE_2018_3639_DISABLE	0x0
+#define CTX_CVE_2018_3639_END		0x10 /* Align to the next 16 byte boundary */
 
 #ifndef __ASSEMBLY__
 
@@ -186,6 +192,7 @@
 #define CTX_FPREG_ALL		(CTX_FPREGS_END >> DWORD_SHIFT)
 #endif
 #define CTX_EL3STATE_ALL	(CTX_EL3STATE_END >> DWORD_SHIFT)
+#define CTX_CVE_2018_3639_ALL	(CTX_CVE_2018_3639_END >> DWORD_SHIFT)
 
 /*
  * AArch64 general purpose register context structure. Usually x0-x18,
@@ -218,6 +225,9 @@ DEFINE_REG_STRUCT(fp_regs, CTX_FPREG_ALL);
  */
 DEFINE_REG_STRUCT(el3_state, CTX_EL3STATE_ALL);
 
+/* Function pointer used by CVE-2018-3639 dynamic mitigation */
+DEFINE_REG_STRUCT(cve_2018_3639, CTX_CVE_2018_3639_ALL);
+
 /*
  * Macros to access members of any of the above structures using their
  * offsets
@@ -242,6 +252,7 @@ typedef struct cpu_context {
 #if CTX_INCLUDE_FPREGS
 	fp_regs_t fpregs_ctx;
 #endif
+	cve_2018_3639_t cve_2018_3639_ctx;
 } cpu_context_t;
 
 /* Macros to access members of the 'cpu_context_t' structure */
@@ -267,6 +278,8 @@ CASSERT(CTX_FPREGS_OFFSET == __builtin_offsetof(cpu_context_t, fpregs_ctx), \
 #endif
 CASSERT(CTX_EL3STATE_OFFSET == __builtin_offsetof(cpu_context_t, el3state_ctx), \
 	assert_core_context_el3state_offset_mismatch);
+CASSERT(CTX_CVE_2018_3639_OFFSET == __builtin_offsetof(cpu_context_t, cve_2018_3639_ctx), \
+	assert_core_context_cve_2018_3639_offset_mismatch);
 
 /*
  * Helper macro to set the general purpose registers that correspond to
