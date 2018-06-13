@@ -624,7 +624,7 @@ int parse_sec_config_file(char *filename)
 	int			array_sz, element, rval = -1;
 	const char		*cfg_string;
 	int32_t			cfg_int32;
-	const config_setting_t	*csk_array, *control_aray;
+	const config_setting_t	*csk_array, *control_array;
 	sec_options		*sec_opt = 0;
 
 	config_init(&sec_cfg);
@@ -724,9 +724,9 @@ int parse_sec_config_file(char *filename)
 	sec_opt->csk_index = cfg_int32;
 
 	/* Secure boot control array */
-	control_aray = config_lookup(&sec_cfg, "control");
-	if (csk_array != NULL) {
-		array_sz = config_setting_length(control_aray);
+	control_array = config_lookup(&sec_cfg, "control");
+	if (control_array != NULL) {
+		array_sz = config_setting_length(control_array);
 		if (array_sz == 0)
 			fprintf(stderr, "The \"control\" array is empty!\n");
 	} else {
@@ -735,8 +735,8 @@ int parse_sec_config_file(char *filename)
 	}
 
 	for (element = 0; element < CP_CTRL_EL_ARRAY_SZ; element++) {
-		sec_opt->cp_ctrl_arr[element] = config_setting_get_int_elem(control_aray, element * 2);
-		sec_opt->cp_efuse_arr[element] = config_setting_get_int_elem(control_aray, element * 2 + 1);
+		sec_opt->cp_ctrl_arr[element] = config_setting_get_int_elem(control_array, element * 2);
+		sec_opt->cp_efuse_arr[element] = config_setting_get_int_elem(control_array, element * 2 + 1);
 	}
 
 	opts.sec_opts = sec_opt;
@@ -1577,7 +1577,7 @@ int main(int argc, char *argv[])
 		goto main_exit;
 
 #ifdef CONFIG_MVEBU_SECURE_BOOT
-	if ((opts.sec_opts->encrypted_image != 0) && (opts.sec_opts->enc_image_sz != 0))
+	if (opts.sec_opts && (opts.sec_opts->encrypted_image != 0) && (opts.sec_opts->enc_image_sz != 0))
 		ret = write_boot_image(opts.sec_opts->encrypted_image, opts.sec_opts->enc_image_sz, out_fd);
 	else
 #endif
